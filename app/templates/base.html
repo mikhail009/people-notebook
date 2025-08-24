@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ title if title else 'Люди — записная книжка' }}</title>
+  <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@2/css/pico.min.css">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="container">
+    <nav>
+      <ul>
+        <li><strong><a href="/">Люди</a></strong></li>
+      </ul>
+      <ul>
+        <li><a href="/person/new" class="contrast">+ Добавить</a></li>
+        <li><a href="/export.json" target="_blank">Экспорт JSON</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="container">
+    <small>&copy; Записная книжка друзей</small>
+  </footer>
+</body>
+</html>

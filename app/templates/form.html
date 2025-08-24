@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>{{ 'Редактировать' if p else 'Новый человек' }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root{
+      --bg:#f6fbff; --card:#ffffff; --text:#0b1b20; --muted:#6b7a80;
+      --primary:#1dd3b0; --primary-2:#2e7de9; --ring: rgba(46,125,233,.35); --border:#e8eef4;
+    }
+    *{box-sizing:border-box}
+    body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;}
+    header.hero{ padding: 28px 24px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%); color:#fff; box-shadow: inset 0 -1px rgba(0,0,0,.08); }
+    .wrap{ max-width: 980px; margin: 0 auto; padding: 20px 24px 40px;}
+    h1,h2{margin:0 0 8px}
+    .card{ background: var(--card); border:1px solid var(--border); border-radius:16px; padding:16px; box-shadow:0 12px 24px rgba(0,0,0,.06);}
+    fieldset{ border:0; padding:0; margin: 14px 0 0}
+    legend{ font-weight:600; margin-bottom:10px}
+    .grid{ display:grid; gap:12px; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); }
+    label{ display:flex; flex-direction:column; gap:6px; font-weight:600; color:#123}
+    input, select, textarea{
+      appearance:none; border:1px solid var(--border); border-radius:12px; padding:10px 12px; background:#fff;
+      box-shadow:0 1px 0 #fff inset; outline: none;
+    }
+    textarea{ min-height: 90px; }
+    input:focus, select:focus, textarea:focus{ border-color: var(--primary-2); box-shadow: 0 0 0 4px var(--ring); }
+    .actions{ display:flex; gap:10px; margin-top:14px}
+    button{ border:0; border-radius:12px; padding:12px 16px; font-weight:700; cursor:pointer; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%); color:#fff; box-shadow:0 8px 18px rgba(46,125,233,.25); }
+    .secondary{ background:#eef5ff; color:#1b3b6b }
+    .avatar-preview{ display:flex; align-items:center; gap:16px; margin-bottom:8px; }
+    .avatar{ width:72px; height:72px; border-radius:999px; object-fit:cover; border:3px solid #fff; box-shadow:0 4px 14px rgba(0,0,0,.12); background:linear-gradient(135deg,#dffaf3,#e6f0ff); display:flex; align-items:center; justify-content:center; font-weight:800; color:#234; letter-spacing:.5px; }
+    a{ color: var(--primary-2); text-decoration: none; }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap">
+      <h2>{{ 'Редактировать' if p else 'Новый человек' }}</h2>
+      <div style="opacity:.85">Карточка стала ещё информативнее ✨</div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="card">
+      <form method="post" enctype="multipart/form-data" action="{{ '/person/' ~ p.id ~ '/update' if p else '/person/create' }}">
+        <fieldset>
+          <legend>Аватар</legend>
+          <div class="avatar-preview">
+            {% set initials = ((p.first_name[0] if p and p.first_name else '') + (p.last_name[0] if p and p.last_name else '')).upper() %}
+            {% if p and p.avatar_path %}
+              <img class="avatar" src="{{ p.avatar_path }}" alt="">
+            {% else %}
+              <div class="avatar">{{ initials or '👤' }}</div>
+            {% endif %}
+            <label>Загрузить фото
+              <input type="file" name="avatar" accept="image/*">
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Основное</legend>
+          <div class="grid">
+            <label>Имя <input name="first_name" value="{{ p.first_name if p else '' }}"></label>
+            <label>Фамилия <input name="last_name" value="{{ p.last_name if p else '' }}"></label>
+            <label>Телефон <input name="phone" value="{{ p.phone if p else '' }}"></label>
+            <label>Email <input name="email" value="{{ p.email if p else '' }}"></label>
+            <label>Город <input name="city" value="{{ p.city if p else '' }}"></label>
+            <label>Адрес <input name="address" value="{{ p.address if p else '' }}"></label>
+            <label>Квартира <input name="apartment" value="{{ p.apartment if p else '' }}"></label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Дата рождения</legend>
+          <div class="grid">
+            <label>День <input type="number" min="1" max="31" name="birth_day" value="{{ p.birth_day if p else '' }}"></label>
+            <label>Месяц <input type="number" min="1" max="12" name="birth_month" value="{{ p.birth_month if p else '' }}"></label>
+            <label>Год <input type="number" min="1900" max="2100" name="birth_year" value="{{ p.birth_year if p else '' }}"></label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Любимое</legend>
+          <div class="grid">
+            <label>Фильмы/сериалы <input name="favorite_movies" value="{{ p.favorite_movies if p else '' }}"></label>
+            <label>Любимый цвет <input name="favorite_color" value="{{ p.favorite_color if p else '' }}"></label>
+            <label>Любимые цветы <input name="favorite_flowers" value="{{ p.favorite_flowers if p else '' }}"></label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Предпочтения</legend>
+          <div class="grid">
+            <label>Еда
+              <textarea name="food_prefs" placeholder="Любимые кухни, блюда">{{ p.food_prefs if p else '' }}</textarea>
+            </label>
+            <label>Алкоголь
+              <textarea name="alcohol_prefs" placeholder="Что пьёт/не пьёт, любимые напитки">{{ p.alcohol_prefs if p else '' }}</textarea>
+            </label>
+            <label>Куда сходить/погулять
+              <textarea name="places_to_go" placeholder="Любимые места, маршруты">{{ p.places_to_go if p else '' }}</textarea>
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Характер</legend>
+          <div class="grid">
+            <label>Положительные качества
+              <textarea name="traits_positive">{{ p.traits_positive if p else '' }}</textarea>
+            </label>
+            <label>Отрицательные качества
+              <textarea name="traits_negative">{{ p.traits_negative if p else '' }}</textarea>
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Работа</legend>
+          <div class="grid">
+            <label>Где работает
+              <input name="workplace" placeholder="Компания/организация" value="{{ p.workplace if p else '' }}">
+            </label>
+            <label>Должность
+              <input name="job_title" placeholder="Например: Senior Engineer" value="{{ p.job_title if p else '' }}">
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Пожелания на ДР</legend>
+          <label>
+            <textarea name="wishlist" placeholder="Что бы хотел(а) на день рождения">{{ p.wishlist if p else '' }}</textarea>
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Соцсети (только ник)</legend>
+          <div class="grid">
+            <label>Telegram
+              <input name="telegram_username" placeholder="ник без @" value="{{ p.telegram_username if p else '' }}">
+            </label>
+            <label>Instagram
+              <input name="instagram_username" placeholder="ник без @" value="{{ p.instagram_username if p else '' }}">
+            </label>
+            <label>VK
+              <input name="vk_username" placeholder="ник без @" value="{{ p.vk_username if p else '' }}">
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Личное</legend>
+          <div class="grid">
+            <label>Семейный статус
+              <select name="marital_status" id="marital_status">
+                {% set ms = p.marital_status if p else '' %}
+                <option value="">—</option>
+                <option value="single"    {{ 'selected' if ms=='single' }}>Одинок(а)</option>
+                <option value="married"   {{ 'selected' if ms=='married' }}>Женат(а)</option>
+                <option value="partnered" {{ 'selected' if ms=='partnered' }}>Есть вторая половинка</option>
+              </select>
+            </label>
+            <label id="partner_name_wrap" style="display:none">Имя партнёра
+              <input name="partner_name" value="{{ p.partner_name if p else '' }}">
+            </label>
+            <label>Левша/Правша
+              <select name="handedness">
+                {% set h = p.handedness if p else '' %}
+                <option value="">—</option>
+                <option value="right" {{ 'selected' if h=='right' }}>Правша</option>
+                <option value="left"  {{ 'selected' if h=='left'  }}>Левша</option>
+                <option value="ambi"  {{ 'selected' if h=='ambi'  }}>Амбидекстр</option>
+              </select>
+            </label>
+            <label>Курит?
+              {% set s = p.smokes if p is not none else None %}
+              <select name="smokes">
+                <option value=""  {{ 'selected' if s is none }}>—</option>
+                <option value="1" {{ 'selected' if s is true }}>Да</option>
+                <option value="0" {{ 'selected' if s is false }}>Нет</option>
+              </select>
+            </label>
+          </div>
+        </fieldset>
+
+        <div class="actions">
+          <button type="submit">Сохранить</button>
+          <a class="secondary" href="{{ '/person/' ~ p.id if p else '/' }}" style="padding:12px 16px; border-radius:12px; text-decoration:none;">Отмена</a>
+        </div>
+      </form>
+
+      {% if p %}
+      <form method="post" action="/person/{{ p.id }}/delete" onsubmit="return confirm('Удалить человека и все связанные данные?')" style="margin-top:10px">
+        <button class="secondary" style="background:#ff3b30; color:#fff;">Удалить человека</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    function togglePartner() {
+      var sel = document.getElementById('marital_status');
+      var wrap = document.getElementById('partner_name_wrap');
+      if (!sel || !wrap) return;
+      var v = sel.value;
+      wrap.style.display = (v === 'married' || v === 'partnered') ? '' : 'none';
+    }
+    document.addEventListener('DOMContentLoaded', togglePartner);
+    document.getElementById('marital_status')?.addEventListener('change', togglePartner);
+  })();
+  </script>
+</body>
+</html>

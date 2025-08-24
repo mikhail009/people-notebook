@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>{{ (p.first_name or '') ~ ' ' ~ (p.last_name or '') }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root{
+      --bg:#f6fbff; --card:#fff; --text:#0b1b20; --muted:#6b7a80;
+      --primary:#1dd3b0; --primary-2:#2e7de9; --border:#e8eef4; --ring: rgba(46,125,233,.35);
+    }
+    *{box-sizing:border-box}
+    body{ margin:0; background:var(--bg); color:var(--text); font:15px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;}
+    header.hero{
+      padding:44px 24px 72px;
+      background: radial-gradient(1200px 500px at 20% 0%, rgba(255,255,255,.25), transparent 60%),
+                  linear-gradient(135deg, var(--primary) 0%, var(--primary-2) 100%);
+      color:#fff; position: relative; box-shadow: inset 0 -1px rgba(0,0,0,.08);
+    }
+    .wrap{ max-width: 1000px; margin: 0 auto; padding: 0 24px 40px; }
+    .card{ background:var(--card); border:1px solid var(--border); border-radius:16px; padding:16px; box-shadow:0 12px 24px rgba(0,0,0,.06); }
+    section{ margin: 18px 0; }
+    h2{margin:0}
+    .avatar{
+      width:96px; height:96px; border-radius:999px; object-fit:cover; border:4px solid rgba(255,255,255,.9);
+      background:linear-gradient(135deg,#dffaf3,#e6f0ff); display:flex; align-items:center; justify-content:center; font-weight:800; color:#234; letter-spacing:.5px;
+      box-shadow:0 10px 24px rgba(0,0,0,.25);
+    }
+    .hero-card{
+      position:relative; top:-56px; background:var(--card); border:1px solid var(--border); border-radius:16px; padding:16px;
+      display:flex; gap:16px; align-items:center; box-shadow:0 18px 34px rgba(0,0,0,.18);
+    }
+    .muted{ color:var(--muted) }
+    .grid{ display:grid; gap:10px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+    .chip{ display:inline-block; padding:6px 10px; border-radius:999px; background:#eef6ff; color:#1b3b6b; font-weight:600; border:1px solid #dbe6ff; }
+    details summary{ cursor:pointer }
+    ul.pets{ list-style:none; padding:0; margin:0 }
+    .pet{ border:1px solid var(--border); border-radius:14px; padding:10px; margin:10px 0; background:#fff; }
+    .pet-thumb{ width:56px; height:56px; border-radius:12px; background:#eef5ff; display:inline-flex; align-items:center; justify-content:center; margin-right:8px; }
+    input, textarea, select{ border:1px solid var(--border); border-radius:12px; padding:8px 10px; width:100%; outline:none }
+    input:focus, textarea:focus, select:focus{ border-color:var(--primary-2); box-shadow: 0 0 0 4px var(--ring); }
+    button{ border:0; border-radius:12px; padding:10px 14px; background:linear-gradient(135deg, var(--primary), var(--primary-2)); color:#fff; cursor:pointer; box-shadow:0 10px 20px rgba(46,125,233,.2); }
+    .secondary{ background:#eef5ff; color:#1b3b6b }
+    img.pet-photo{ max-width:160px; border-radius:10px; display:block }
+    .top-links a{ color:#fff; opacity:.9; text-decoration:none }
+    .actions-row{ display:flex; gap:10px; flex-wrap:wrap; }
+    a.link{ color: var(--primary-2); text-decoration: none; }
+  </style>
+</head>
+<body data-page="detail-v3">
+
+<header class="hero">
+  <div class="wrap">
+    <div class="top-links"><a href="/">← ко списку</a></div>
+    <h2>{{ p.first_name or '' }} {{ p.last_name or '' }}</h2>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="hero-card">
+    {% set initials = ((p.first_name[0] if p.first_name else '') + (p.last_name[0] if p.last_name else '')).upper() %}
+    {% if p.avatar_path %}
+      <img class="avatar" src="{{ p.avatar_path }}" alt="">
+    {% else %}
+      <div class="avatar">{{ initials or '👤' }}</div>
+    {% endif %}
+    <div style="flex:1">
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+        {% if p.city %}<span class="chip">📍 {{ p.city }}</span>{% endif %}
+        {% if p.phone %}<span class="chip">📞 {{ p.phone }}</span>{% endif %}
+        {% if p.email %}<span class="chip">✉️ {{ p.email }}</span>{% endif %}
+      </div>
+      {% if p.birth_day or p.birth_month or p.birth_year %}
+        <div class="muted" style="margin-top:6px">
+          🎂
+          {% if p.birth_day %}{{ "%02d"|format(p.birth_day) }}.{% else %}??.{% endif %}
+          {% if p.birth_month %}{{ "%02d"|format(p.birth_month) }}{% else %}??{% endif %}
+          {% if p.birth_year %} {{ p.birth_year }}{% endif %}
+          {% set age = calc_age(p.birth_day, p.birth_month, p.birth_year) %}
+          {% if age is not none %} • {{ age }} лет{% endif %}
+        </div>
+      {% endif %}
+      {% if address_full %}
+        <div class="muted" style="margin-top:6px">
+          🏠 Адрес:
+          <a class="link" target="_blank" rel="noopener" href="{{ yandex_maps_url(address_full) }}">{{ address_full }}</a>
+        </div>
+      {% endif %}
+    </div>
+    <div class="actions-row">
+      <a class="secondary" href="/person/{{ p.id }}/edit" style="padding:10px 14px; border-radius:12px; text-decoration:none;">Редактировать</a>
+      <form method="post" action="/person/{{ p.id }}/delete" onsubmit="return confirm('Удалить человека и все связанные данные?')">
+        <button style="background:#ff3b30;">Удалить</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Работа -->
+  <section>
+    <h4>💼 Работа</h4>
+    {% if p.workplace or p.job_title %}
+      <div class="card">
+        {% if p.workplace %}<div><strong>Где работает:</strong> {{ p.workplace }}</div>{% endif %}
+        {% if p.job_title %}<div><strong>Должность:</strong> {{ p.job_title }}</div>{% endif %}
+      </div>
+    {% else %}
+      <div class="card muted">Не указано.</div>
+    {% endif %}
+  </section>
+
+  <!-- Семья -->
+  <section>
+    <h4>💍 Семья</h4>
+    {% if p.marital_status or p.partner_name %}
+      <div class="card">
+        {% if p.marital_status %}
+          <div><strong>Статус:</strong>
+            {% if p.marital_status=='single' %}Одинок(а){% endif %}
+            {% if p.marital_status=='married' %}Женат(а){% endif %}
+            {% if p.marital_status=='partnered' %}Есть вторая половинка{% endif %}
+          </div>
+        {% endif %}
+        {% if p.partner_name %}<div><strong>Партнёр:</strong> {{ p.partner_name }}</div>{% endif %}
+      </div>
+    {% else %}
+      <div class="card muted">Не указано.</div>
+    {% endif %}
+  </section>
+
+  <!-- Личное -->
+  <section>
+    <h4>🧠 Личное</h4>
+    {% if p.handedness or p.smokes is not none %}
+      <div class="card">
+        {% if p.handedness %}
+          <div><strong>Рука:</strong>
+            {% if p.handedness=='right' %}Правша{% elif p.handedness=='left' %}Левша{% else %}Амбидекстр{% endif %}
+          </div>
+        {% endif %}
+        {% if p.smokes is not none %}
+          <div><strong>Курит:</strong> {{ 'Да' if p.smokes else 'Нет' }}</div>
+        {% endif %}
+      </div>
+    {% else %}
+      <div class="card muted">Не указано.</div>
+    {% endif %}
+  </section>
+
+  <!-- Предпочтения -->
+  <section>
+    <h4>🍽️ Предпочтения</h4>
+    {% if p.food_prefs or p.alcohol_prefs or p.places_to_go %}
+      <div class="card">
+        {% if p.food_prefs %}<div><strong>Еда:</strong> {{ p.food_prefs|replace('\n','<br>')|safe }}</div>{% endif %}
+        {% if p.alcohol_prefs %}<div><strong>Алкоголь:</strong> {{ p.alcohol_prefs|replace('\n','<br>')|safe }}</div>{% endif %}
+        {% if p.places_to_go %}<div><strong>Куда сходить/погулять:</strong> {{ p.places_to_go|replace('\n','<br>')|safe }}</div>{% endif %}
+      </div>
+    {% else %}
+      <div class="card muted">Не указано.</div>
+    {% endif %}
+  </section>
+
+  <!-- Характер -->
+  <section>
+    <h4>🌟 Характер</h4>
+    {% if p.traits_positive or p.traits_negative %}
+      <div class="card">
+        {% if p.traits_positive %}<div><strong>Положительные качества:</strong><br>{{ p.traits_positive|replace('\n','<br>')|safe }}</div>{% endif %}
+        {% if p.traits_negative %}<div style="margin-top:8px"><strong>Отрицательные качества:</strong><br>{{ p.traits_negative|replace('\n','<br>')|safe }}</div>{% endif %}
+      </div>
+    {% else %}
+      <div class="card muted">Не указано.</div>
+    {% endif %}
+  </section>
+
+  <!-- Пожелания на ДР -->
+  <section>
+    <h4>🎁 Что хотел(а) на ДР</h4>
+    {% if p.wishlist %}
+      <div class="card">{{ p.wishlist|replace('\n','<br>')|safe }}</div>
+    {% else %}
+      <div class="card muted">Не указано.</div>
+    {% endif %}
+  </section>
+
+  <!-- Соцсети -->
+  <section>
+    <h4>🌐 Соцсети</h4>
+    {% if p.telegram_username or p.instagram_username or p.vk_username %}
+      <div class="card">
+        {% if p.telegram_username %}
+          <div><strong>Telegram:</strong> <a class="link" target="_blank" rel="noopener" href="https://t.me/{{ p.telegram_username }}">@{{ p.telegram_username }}</a></div>
+        {% endif %}
+        {% if p.instagram_username %}
+          <div><strong>Instagram:</strong> <a class="link" target="_blank" rel="noopener" href="https://instagram.com/{{ p.instagram_username }}">@{{ p.instagram_username }}</a></div>
+        {% endif %}
+        {% if p.vk_username %}
+          <div><strong>VK:</strong> <a class="link" target="_blank" rel="noopener" href="https://vk.com/{{ p.vk_username }}">@{{ p.vk_username }}</a></div>
+        {% endif %}
+      </div>
+    {% else %}
+      <div class="card muted">Не указано.</div>
+    {% endif %}
+  </section>
+
+  <!-- Домашние животные -->
+  <section>
+    <h4>🐾 Домашние животные</h4>
+    <details>
+      <summary>+ Добавить питомца</summary>
+      <div class="card" style="margin-top:10px">
+        <form method="post" action="/person/{{ p.id }}/pets/new" enctype="multipart/form-data">
+          <div class="grid">
+            <label>Кличка <input name="name" required></label>
+            <label>Вид <input name="species" required placeholder="кошка, собака..."></label>
+            <label>Порода <input name="breed"></label>
+            <label>Возраст <input name="age"></label>
+            <label>Пол <input name="sex"></label>
+          </div>
+          <label>Кормление <textarea name="feeding" rows="2"></textarea></label>
+          <label>Уход <textarea name="care" rows="2"></textarea></label>
+          <label>Заметки <textarea name="notes" rows="2"></textarea></label>
+          <label>Фото <input type="file" name="photo" accept="image/*"></label>
+          <button type="submit">Сохранить</button>
+        </form>
+      </div>
+    </details>
+
+    {% if pets and pets|length %}
+      <ul class="pets">
+        {% for pet in pets %}
+          <li class="pet">
+            <details>
+              <summary>
+                {% if pet.photo_path %}<img class="pet-photo" src="{{ pet.photo_path }}" alt="">{% else %}
+                  <span class="pet-thumb">🐾</span>
+                {% endif %}
+                <strong>{{ pet.name }}</strong> — {{ pet.species }}
+              </summary>
+              <div style="margin-top:8px">
+                <div class="grid">
+                  {% if pet.breed %}<div>Порода: {{ pet.breed }}</div>{% endif %}
+                  {% if pet.age %}<div>Возраст: {{ pet.age }}</div>{% endif %}
+                  {% if pet.sex %}<div>Пол: {{ pet.sex }}</div>{% endif %}
+                </div>
+                {% if pet.feeding %}<p><strong>Кормление:</strong><br>{{ pet.feeding|replace('\n','<br>')|safe }}</p>{% endif %}
+                {% if pet.care %}<p><strong>Уход:</strong><br>{{ pet.care|replace('\n','<br>')|safe }}</p>{% endif %}
+                {% if pet.notes %}<p><strong>Заметки:</strong><br>{{ pet.notes|replace('\n','<br>')|safe }}</p>{% endif %}
+
+                <form method="post" action="/pets/{{ pet.id }}/edit" enctype="multipart/form-data" style="margin-top:8px">
+                  <h6>Редактировать</h6>
+                  <div class="grid">
+                    <label>Кличка <input name="name" value="{{ pet.name }}" required></label>
+                    <label>Вид <input name="species" value="{{ pet.species }}" required></label>
+                    <label>Порода <input name="breed" value="{{ pet.breed or '' }}"></label>
+                    <label>Возраст <input name="age" value="{{ pet.age or '' }}"></label>
+                    <label>Пол <input name="sex" value="{{ pet.sex or '' }}"></label>
+                  </div>
+                  <label>Кормление <textarea name="feeding" rows="2">{{ pet.feeding or '' }}</textarea></label>
+                  <label>Уход <textarea name="care" rows="2">{{ pet.care or '' }}"></textarea></label>
+                  <label>Заметки <textarea name="notes" rows="2">{{ pet.notes or '' }}"></textarea></label>
+                  <label>Фото <input type="file" name="photo" accept="image/*"></label>
+
+                  <div class="actions-row" style="margin-top:8px">
+                    <button type="submit">Сохранить</button>
+                    <button class="secondary" type="submit" formmethod="post" formaction="/pets/{{ pet.id }}/delete" onclick="return confirm('Удалить питомца?')">Удалить</button>
+                  </div>
+                </form>
+              </div>
+            </details>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="card muted">Питомцев нет.</div>
+    {% endif %}
+  </section>
+
+  <!-- Дети -->
+  <section>
+    <h4>👶 Дети</h4>
+    <details>
+      <summary>+ Добавить ребёнка</summary>
+      <div class="card" style="margin-top:10px">
+        <form method="post" action="/person/{{ p.id }}/children/new">
+          <div class="grid">
+            <label>Имя <input name="name" required></label>
+            <label>День <input type="number" min="1" max="31" name="birth_day"></label>
+            <label>Месяц <input type="number" min="1" max="12" name="birth_month"></label>
+            <label>Год <input type="number" min="1900" max="2100" name="birth_year"></label>
+          </div>
+          <div class="grid">
+            <label>Пол <input name="sex" placeholder="м/ж/другое"></label>
+          </div>
+          <label>Заметки <textarea name="notes" rows="2"></textarea></label>
+          <button type="submit">Сохранить</button>
+        </form>
+      </div>
+    </details>
+
+    {% if children and children|length %}
+      <ul class="pets">
+        {% for c in children %}
+          <li class="pet">
+            <details>
+              <summary>
+                <span class="pet-thumb">👶</span>
+                <strong>{{ c.name }}</strong>
+                {% set a = calc_age(c.birth_day, c.birth_month, c.birth_year) %}
+                {% if a is not none %} — {{ a }} лет{% endif %}
+              </summary>
+              <div class="pet-body" style="margin-top:8px">
+                <div class="grid">
+                  {% if c.birth_day or c.birth_month or c.birth_year %}
+                    <div>🎂 ДР:
+                      {% if c.birth_day %}{{ "%02d"|format(c.birth_day) }}.{% else %}??.{% endif %}
+                      {% if c.birth_month %}{{ "%02d"|format(c.birth_month) }}{% else %}??{% endif %}
+                      {% if c.birth_year %} {{ c.birth_year }}{% endif %}
+                    </div>
+                  {% endif %}
+                  {% if c.sex %}<div>⚧ Пол: {{ c.sex }}</div>{% endif %}
+                </div>
+                {% if c.notes %}<p class="note-body">{{ c.notes | replace('\n','<br>') | safe }}</p>{% endif %}
+
+                <form method="post" action="/children/{{ c.id }}/edit" style="margin-top:8px">
+                  <h6>Редактировать</h6>
+                  <div class="grid">
+                    <label>Имя <input name="name" value="{{ c.name }}" required></label>
+                    <label>День <input type="number" min="1" max="31" name="birth_day" value="{{ c.birth_day or '' }}"></label>
+                    <label>Месяц <input type="number" min="1" max="12" name="birth_month" value="{{ c.birth_month or '' }}"></label>
+                    <label>Год <input type="number" min="1900" max="2100" name="birth_year" value="{{ c.birth_year or '' }}"></label>
+                  </div>
+                  <div class="grid">
+                    <label>Пол <input name="sex" value="{{ c.sex or '' }}"></label>
+                  </div>
+                  <label>Заметки <textarea name="notes" rows="2">{{ c.notes or '' }}</textarea></label>
+
+                  <div class="actions-row" style="margin-top:8px">
+                    <button type="submit">Сохранить</button>
+                    <button class="secondary" type="submit" formmethod="post" formaction="/children/{{ c.id }}/delete" onclick="return confirm('Удалить?')">Удалить</button>
+                  </div>
+                </form>
+              </div>
+            </details>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="card muted">Детей пока не добавили.</div>
+    {% endif %}
+  </section>
+</div>
+</body>
+</html>
