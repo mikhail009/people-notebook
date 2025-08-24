@@ -43,3 +43,8 @@
    ```bash
    git clone https://github.com/<you>/people-notebook.git
    cd people-notebook
+2. Укажите перменные в .env файле
+3. Запустите проект:
+   ```bash
+   docker compose up -d
+4. Перейдите на "127.0.0.1:3000"
